@@ -1,0 +1,24 @@
+{
+  "name": "ts-morph-mcp-server",
+  "version": "0.1.0",
+  "description": "A tool to introspect exported symbols from a TypeScript package using ts-morph and output a MCP-like schema.",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "vitest"
+  },
+  "author": "t3ta",
+  "license": "MIT",
+  "dependencies": {
+    "ts-morph": "^20.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3",
+    "vitest": "^1.5.0",
+    "zod": "^3.24.2"
+  }
+}
