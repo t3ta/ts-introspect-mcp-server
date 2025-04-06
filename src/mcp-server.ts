@@ -103,7 +103,7 @@ async function main() {
               content: [
                 { 
                   type: "text", 
-                  text: `No exports were found in package "${packageName}".\n\nThis might be because:\n\n1. The package has no TypeScript definitions\n2. The package uses a non-standard export format\n3. The package could not be found in the search paths\n\nI searched in the following locations:\n${allSearchPaths.map(p => `- ${p}`).join('\n')}\n\nIf you know where the package is installed, you can specify a search path:\n\`\`\`\nintrospect-package({\n  packageName: "${packageName}",\n  searchPaths: ["/path/to/package"]\n})\n\`\`\`` 
+                  text: `No exports were found in package "${packageName}".\n\nThis might be because:\n\n1. The package has no TypeScript definitions\n2. The package uses a non-standard export format\n3. The package could not be found in the search paths\n\nI searched in the following locations:\n${allSearchPaths.map(p => `- ${p}`).join('\n')}\n\nIf you know where the package is installed, you can specify a search path:\n\`\`\`\nintrospect-package({\n  packageName: "${packageName}",\n  searchPaths: ["/path/to/package"],\n  // Optional parameters:\n  searchTerm: "regex pattern",  // Filter by name/type/description\n  cache: true,                  // Cache results for faster repeat lookups\n  cacheDir: ".my-cache",        // Custom cache directory\n  limit: 10                     // Limit number of results\n})\n\`\`\`` 
                 }
               ]
             };
@@ -138,7 +138,7 @@ async function main() {
             content: [
               { 
                 type: "text", 
-                text: `Error introspecting package "${packageName}":\n\n${errorMessage}\n\nI searched in these locations:\n${allSearchPaths.map(p => `- ${p}`).join('\n')}\n\nIf you know where the package is installed, try providing a search path:\n\`\`\`\nintrospect-package({\n  packageName: "${packageName}",\n  searchPaths: ["/path/to/package"]\n})\n\`\`\`` 
+                text: `Error introspecting package "${packageName}":\n\n${errorMessage}\n\nI searched in these locations:\n${allSearchPaths.map(p => `- ${p}`).join('\n')}\n\nIf you know where the package is installed, try providing a search path:\n\`\`\`\nintrospect-package({\n  packageName: "${packageName}",\n  searchPaths: ["/path/to/package"],\n  // Optional parameters:\n  searchTerm: "regex pattern",  // Filter by name/type/description\n  cache: true,                  // Cache results for faster repeat lookups\n  cacheDir: ".my-cache",        // Custom cache directory\n  limit: 10                     // Limit number of results\n})\n\`\`\`` 
               }
             ],
             isError: true
