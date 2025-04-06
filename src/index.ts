@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // src/index.ts
 import { introspectFromPackage } from "./introspect/fromPackage.js";
 import { introspectFromSource } from "./introspect/fromSource.js";

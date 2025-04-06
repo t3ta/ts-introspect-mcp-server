@@ -5,6 +5,10 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "ts-introspect": "dist/index.js",
+    "ts-introspect-server": "dist/mcp-server.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/index.ts",
