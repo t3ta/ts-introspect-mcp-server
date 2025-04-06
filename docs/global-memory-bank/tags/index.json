@@ -1,0 +1,44 @@
+{
+  "schema": "memory_document_v2",
+  "metadata": {
+    "id": "tags-index",
+    "title": "タグインデックス",
+    "documentType": "generic",
+    "path": "tags/index.json",
+    "tags": [
+      "index",
+      "meta"
+    ],
+    "lastModified": "2025-04-06T13:33:22.968Z",
+    "createdAt": "2025-04-06T13:33:22.968Z",
+    "version": 1
+  },
+  "content": {
+    "sections": [
+      {
+        "title": "Tags List",
+        "content": "タグとドキュメントの関連付け"
+      }
+    ],
+    "tagMap": {
+      "index": {
+        "count": 1,
+        "documents": [
+          {
+            "path": "tags/index.json",
+            "title": "tags/index.json"
+          }
+        ]
+      },
+      "meta": {
+        "count": 1,
+        "documents": [
+          {
+            "path": "tags/index.json",
+            "title": "tags/index.json"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,5 +1,12 @@
+// src/index.ts
 import { introspectFromPackage } from "./introspect/fromPackage.js";
+import { introspectFromSource } from "./introspect/fromSource.js";
 
+// Re-export the core functions
+export { introspectFromPackage, introspectFromSource };
+export type { ExportInfo } from "./introspect/types.js";
+
+// CLI entry point
 async function main() {
   const packageName = process.argv[2];
 
@@ -17,4 +24,7 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+// Only run main if this file is being executed directly
+if (import.meta.url === process.argv[1]) {
+  main().catch(console.error);
+}
