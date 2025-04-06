@@ -1,6 +1,6 @@
 // src/introspect/fromPackage.ts
 import { Project, Node, SourceFile, ModuleResolutionKind } from "ts-morph";
-import { ExportInfo } from "./types.js";
+import { ExportInfo, IntrospectOptions } from "./types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { createRequire } from "module";
@@ -9,16 +9,39 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 /**
+ * Default cache directory
+ */
+const DEFAULT_CACHE_DIR = ".ts-morph-cache";
+
+/**
  * Extracts export information from a package's TypeScript declaration files
  * @param packageName Name of the package to introspect (e.g. "zod")
- * @param searchPaths Optional array of additional paths to search for the package
+ * @param options Configuration options for introspection
  * @returns Promise resolving to an array of export information
  */
 export async function introspectFromPackage(
   packageName: string,
-  searchPaths: string[] = []
+  options: IntrospectOptions = {}
 ): Promise<ExportInfo[]> {
+  const {
+    searchPaths = [],
+    searchTerm,
+    cache = false,
+    cacheDir = DEFAULT_CACHE_DIR,
+    limit
+  } = options;
+
   console.error(`🔎 Introspecting package: ${packageName}...`);
+  
+  // Try to load from cache first if enabled
+  if (cache) {
+    const cachedExports = tryLoadFromCache(packageName, cacheDir);
+    if (cachedExports) {
+      console.error(`✅ Loaded exports from cache for ${packageName}`);
+      return filterExports(cachedExports, searchTerm, limit);
+    }
+  }
+
   console.error(`🔍 Search paths: ${[process.cwd(), ...searchPaths].join(', ')}`);
   
   const project = new Project({
@@ -123,6 +146,8 @@ export async function introspectFromPackage(
     const mainDtsPath = path.join(packageDir, typesPath.startsWith('./') ? typesPath.slice(2) : typesPath);
     console.error(`📄 Full path to declaration file: ${mainDtsPath}`);
 
+    let allExports: ExportInfo[] = [];
+
     if (!fs.existsSync(mainDtsPath)) {
       console.error(`❌ Type definitions not found at ${mainDtsPath}`);
       
@@ -145,15 +170,23 @@ export async function introspectFromPackage(
       console.error(`📄 Source file added to project`);
       
       // Extract exports using getExportSymbols
-      return extractExports(sourceFile);
+      allExports = extractExports(sourceFile);
+    } else {
+      // Add the main file to the project
+      const sourceFile = project.addSourceFileAtPath(mainDtsPath);
+      console.error(`📄 Source file added to project`);
+
+      // Extract exports using getExportSymbols
+      allExports = extractExports(sourceFile);
     }
 
-    // Add the main file to the project
-    const sourceFile = project.addSourceFileAtPath(mainDtsPath);
-    console.error(`📄 Source file added to project`);
+    // Save to cache if enabled
+    if (cache) {
+      saveToCache(packageName, allExports, cacheDir);
+    }
 
-    // Extract exports using getExportSymbols
-    return extractExports(sourceFile);
+    // Apply filtering
+    return filterExports(allExports, searchTerm, limit);
   } catch (error) {
     console.error(`❌ Failed to load declaration file for package ${packageName}:`, error);
     return [];
@@ -255,4 +288,71 @@ function getExportInfo(node: Node, name: string): ExportInfo | null {
     typeSignature,
     description,
   };
+}
+
+/**
+ * Tries to load exports from cache
+ */
+function tryLoadFromCache(packageName: string, cacheDir: string): ExportInfo[] | null {
+  const cacheFilePath = path.join(process.cwd(), cacheDir, `${packageName}.json`);
+  
+  if (!fs.existsSync(cacheFilePath)) {
+    return null;
+  }
+  
+  try {
+    const cacheContent = fs.readFileSync(cacheFilePath, 'utf8');
+    return JSON.parse(cacheContent);
+  } catch (error) {
+    console.error(`❌ Failed to load cache for ${packageName}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Saves exports to cache
+ */
+function saveToCache(packageName: string, exports: ExportInfo[], cacheDir: string): void {
+  const cacheDirPath = path.join(process.cwd(), cacheDir);
+  
+  // Create cache directory if it doesn't exist
+  if (!fs.existsSync(cacheDirPath)) {
+    fs.mkdirSync(cacheDirPath, { recursive: true });
+  }
+  
+  const cacheFilePath = path.join(cacheDirPath, `${packageName}.json`);
+  
+  try {
+    fs.writeFileSync(cacheFilePath, JSON.stringify(exports, null, 2));
+    console.error(`✅ Saved ${exports.length} exports to cache: ${cacheFilePath}`);
+  } catch (error) {
+    console.error(`❌ Failed to save cache for ${packageName}:`, error);
+  }
+}
+
+/**
+ * Filters exports based on search term and limit
+ */
+function filterExports(exports: ExportInfo[], searchTerm?: string, limit?: number): ExportInfo[] {
+  let result = exports;
+  
+  // Apply search term filter if provided
+  if (searchTerm) {
+    const regex = new RegExp(searchTerm, 'i');
+    result = exports.filter(exp => 
+      regex.test(exp.name) || 
+      regex.test(exp.typeSignature) || 
+      regex.test(exp.description)
+    );
+    
+    console.error(`🔍 Filtered to ${result.length} exports matching "${searchTerm}"`);
+  }
+  
+  // Apply limit if provided
+  if (limit !== undefined && limit > 0) {
+    result = result.slice(0, limit);
+    console.error(`📊 Limited to ${result.length} exports`);
+  }
+  
+  return result;
 }

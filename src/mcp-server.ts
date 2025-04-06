@@ -4,6 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { introspectFromPackage } from "./introspect/fromPackage.js";
 import { introspectFromSource } from "./introspect/fromSource.js";
+import { IntrospectOptions } from "./introspect/types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { createRequire } from "module";
@@ -42,7 +43,7 @@ async function main() {
   // Run direct tests
   try {
     console.error("🧪 Testing direct call to introspectFromPackage('zod')...");
-    const zodExports = await introspectFromPackage("zod", DEFAULT_SEARCH_PATHS);
+    const zodExports = await introspectFromPackage("zod", { searchPaths: DEFAULT_SEARCH_PATHS });
     console.error(`✅ Direct call succeeded, found ${zodExports.length} exports`);
     fs.writeFileSync("debug-zod-exports.json", JSON.stringify(zodExports, null, 2));
     console.error("✅ Wrote export data to debug-zod-exports.json");
@@ -67,20 +68,33 @@ async function main() {
       "introspect-package",
       { 
         packageName: z.string().describe("Name of the npm package to introspect (e.g. 'zod')"),
-        searchPaths: z.array(z.string()).describe("Optional paths to search for the package").optional()
+        searchPaths: z.array(z.string()).describe("Optional paths to search for the package").optional(),
+        searchTerm: z.string().describe("Filter exports by search term (supports regex)").optional(),
+        cache: z.boolean().describe("Enable/disable caching for faster repeat lookups").optional(),
+        cacheDir: z.string().describe("Directory to store cache files (default: .ts-morph-cache)").optional(),
+        limit: z.number().describe("Limit the number of exports returned").optional()
       },
-      async ({ packageName, searchPaths = [] }) => {
+      async ({ packageName, searchPaths = [], searchTerm, cache, cacheDir, limit }) => {
         console.error(`📋 Running introspect-package for: ${packageName}`);
         console.error(`🔍 User-provided search paths: ${searchPaths.length ? searchPaths.join(', ') : 'none'}`);
         
         // Combine default search paths with user-provided paths
         const allSearchPaths = [...DEFAULT_SEARCH_PATHS, ...searchPaths];
         
+        // Build options object
+        const options: IntrospectOptions = {
+          searchPaths: allSearchPaths,
+          searchTerm,
+          cache,
+          cacheDir,
+          limit
+        };
+        
         // Extra safeguard to catch every possible error
         try {
           // Normal flow continues
           console.error(`⏳ Starting introspection of ${packageName}...`);
-          const exports = await introspectFromPackage(packageName, allSearchPaths);
+          const exports = await introspectFromPackage(packageName, options);
           
           // Handle the annoying empty arrays case
           if (exports.length === 0) {
