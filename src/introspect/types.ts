@@ -11,3 +11,23 @@ export type ExportInfo = {
   /** JSDoc comment if available */
   description: string;
 };
+
+/**
+ * Options for introspecting a package
+ */
+export type IntrospectOptions = {
+  /** Additional paths to search for the package */
+  searchPaths?: string[];
+  
+  /** Optional search term to filter exports (case-insensitive, supports regex patterns) */
+  searchTerm?: string;
+  
+  /** Whether to use caching for faster repeat lookups */
+  cache?: boolean;
+  
+  /** Directory to store cache files (default: ".ts-morph-cache") */
+  cacheDir?: string;
+  
+  /** Limit the number of exports returned */
+  limit?: number;
+};

@@ -1,6 +1,6 @@
 // src/introspect/fromPackage.ts
 import { Project, Node, SourceFile, ModuleResolutionKind } from "ts-morph";
-import { ExportInfo } from "./types.js";
+import { ExportInfo, IntrospectOptions } from "./types.js";
 import * as fs from "fs";
 import * as path from "path";
 import { createRequire } from "module";
@@ -9,16 +9,39 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 /**
+ * Default cache directory
+ */
+const DEFAULT_CACHE_DIR = ".ts-morph-cache";
+
+/**
  * Extracts export information from a package's TypeScript declaration files
  * @param packageName Name of the package to introspect (e.g. "zod")
- * @param searchPaths Optional array of additional paths to search for the package
+ * @param options Configuration options for introspection
  * @returns Promise resolving to an array of export information
  */
 export async function introspectFromPackage(
   packageName: string,
-  searchPaths: string[] = []
+  options: IntrospectOptions = {}
 ): Promise<ExportInfo[]> {
+  const {
+    searchPaths = [],
+    searchTerm,
+    cache = false,
+    cacheDir = DEFAULT_CACHE_DIR,
+    limit
+  } = options;
+
   console.error(`🔎 Introspecting package: ${packageName}...`);
+  
+  // Try to load from cache first if enabled
+  if (cache) {
+    const cachedExports = tryLoadFromCache(packageName, cacheDir);
+    if (cachedExports) {
+      console.error(`✅ Loaded exports from cache for ${packageName}`);
+      return filterExports(cachedExports, searchTerm, limit);
+    }
+  }
+
   console.error(`🔍 Search paths: ${[process.cwd(), ...searchPaths].join(', ')}`);
   
   const project = new Project({
@@ -28,9 +51,12 @@ export async function introspectFromPackage(
       emitDeclarationOnly: true,
       skipLibCheck: true,
       moduleResolution: ModuleResolutionKind.NodeJs,
+      // Performance optimizations
+      noResolve: true,
     },
     skipAddingFilesFromTsConfig: true,
-    skipFileDependencyResolution: false, // Enable dependency resolution
+    skipFileDependencyResolution: true, // Disable dependency resolution to improve performance
+    useInMemoryFileSystem: true, // Use in-memory file system for better performance
     tsConfigFilePath: undefined,
   });
 
@@ -43,43 +69,72 @@ export async function introspectFromPackage(
     let packageJson: any = {};
     let found = false;
     
-    // Try to find package.json using require.resolve first
+    // Try to find package.json using require.resolve first - fastest method
     try {
       packageJsonPath = require.resolve(`${packageName}/package.json`);
       console.error(`✅ Found package.json at: ${packageJsonPath} (via require.resolve)`);
       
       packageDir = path.dirname(packageJsonPath);
-      console.error(`📂 Package directory: ${packageDir}`);
       
       // Read and parse package.json
       const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
       packageJson = JSON.parse(packageJsonContent);
       found = true;
     } catch (error) {
-      console.error(`❌ Could not resolve ${packageName}/package.json via require:`, error);
+      // Just silently continue to the next method
+      // console.error(`❌ Could not resolve ${packageName}/package.json via require:`, error);
     }
     
     // If not found, try the additional search paths
     if (!found) {
       // All possible package.json locations to check
       const possiblePaths: string[] = [
+        // Standard node_modules locations
         path.join(process.cwd(), 'node_modules', packageName, 'package.json'),
         ...searchPaths.map(searchPath => 
           path.join(searchPath, 'node_modules', packageName, 'package.json')
         ),
+        
+        // pnpm specific paths - try both with version and without
+        // For direct packages (e.g. 'zod')
+        path.join(process.cwd(), 'node_modules', '.pnpm', `${packageName}@*`, 'node_modules', packageName, 'package.json'),
+        path.join(process.cwd(), 'node_modules', '.pnpm', packageName, 'node_modules', packageName, 'package.json'),
+        
+        // For subpath packages (e.g. '@modelcontextprotocol/sdk')
+        ...(packageName.includes('/') ? [
+          // Handle @scope/package format
+          path.join(process.cwd(), 'node_modules', '.pnpm', packageName.replace('/', '+')+'@*', 'node_modules', packageName, 'package.json'),
+          path.join(process.cwd(), 'node_modules', '.pnpm', packageName.replace('/', '+'), 'node_modules', packageName, 'package.json')
+        ] : []),
+        
+        // Search in provided paths
+        ...searchPaths.map(searchPath => 
+          path.join(searchPath, 'node_modules', '.pnpm', `${packageName}@*`, 'node_modules', packageName, 'package.json')
+        ),
+        ...searchPaths.map(searchPath => 
+          path.join(searchPath, 'node_modules', '.pnpm', packageName, 'node_modules', packageName, 'package.json')
+        ),
+        
+        // Search in provided paths for subpath packages
+        ...(packageName.includes('/') ? searchPaths.flatMap(searchPath => [
+          path.join(searchPath, 'node_modules', '.pnpm', packageName.replace('/', '+')+'@*', 'node_modules', packageName, 'package.json'),
+          path.join(searchPath, 'node_modules', '.pnpm', packageName.replace('/', '+'), 'node_modules', packageName, 'package.json')
+        ]) : []),
+        
+        // Direct package paths (least likely, but worth checking)
         ...searchPaths.map(searchPath => 
           path.join(searchPath, packageName, 'package.json')
         ),
       ];
       
       for (const possiblePath of possiblePaths) {
-        console.error(`🔍 Checking path: ${possiblePath}`);
+        // Less verbose logging
+        // console.error(`🔍 Checking path: ${possiblePath}`);
         if (fs.existsSync(possiblePath)) {
           packageJsonPath = possiblePath;
           console.error(`✅ Found package.json at: ${packageJsonPath}`);
           
           packageDir = path.dirname(packageJsonPath);
-          console.error(`📂 Package directory: ${packageDir}`);
           
           // Read and parse package.json
           const packageJsonContent = fs.readFileSync(packageJsonPath, 'utf8');
@@ -123,6 +178,8 @@ export async function introspectFromPackage(
     const mainDtsPath = path.join(packageDir, typesPath.startsWith('./') ? typesPath.slice(2) : typesPath);
     console.error(`📄 Full path to declaration file: ${mainDtsPath}`);
 
+    let allExports: ExportInfo[] = [];
+
     if (!fs.existsSync(mainDtsPath)) {
       console.error(`❌ Type definitions not found at ${mainDtsPath}`);
       
@@ -145,15 +202,23 @@ export async function introspectFromPackage(
       console.error(`📄 Source file added to project`);
       
       // Extract exports using getExportSymbols
-      return extractExports(sourceFile);
+      allExports = extractExports(sourceFile);
+    } else {
+      // Add the main file to the project
+      const sourceFile = project.addSourceFileAtPath(mainDtsPath);
+      console.error(`📄 Source file added to project`);
+
+      // Extract exports using getExportSymbols
+      allExports = extractExports(sourceFile);
     }
 
-    // Add the main file to the project
-    const sourceFile = project.addSourceFileAtPath(mainDtsPath);
-    console.error(`📄 Source file added to project`);
+    // Save to cache if enabled
+    if (cache) {
+      saveToCache(packageName, allExports, cacheDir);
+    }
 
-    // Extract exports using getExportSymbols
-    return extractExports(sourceFile);
+    // Apply filtering
+    return filterExports(allExports, searchTerm, limit);
   } catch (error) {
     console.error(`❌ Failed to load declaration file for package ${packageName}:`, error);
     return [];
@@ -171,17 +236,18 @@ function extractExports(sourceFile: SourceFile): ExportInfo[] {
 
   for (const symbol of exportSymbols) {
     const name = symbol.getName();
-    console.error(`  📝 Processing export symbol: ${name}`);
+    // Reduced logging for better performance
+    // console.error(`  📝 Processing export symbol: ${name}`);
     
     // Skip default and internal symbols
     if (name === 'default' || name.startsWith('_')) {
-      console.error(`  ⏭️ Skipping ${name} (default or internal)`);
+      // console.error(`  ⏭️ Skipping ${name} (default or internal)`);
       continue;
     }
 
     const declarations = symbol.getDeclarations();
     if (!declarations || declarations.length === 0) {
-      console.error(`  ⏭️ Skipping ${name} (no declarations)`);
+      // console.error(`  ⏭️ Skipping ${name} (no declarations)`);
       continue;
     }
 
@@ -191,13 +257,13 @@ function extractExports(sourceFile: SourceFile): ExportInfo[] {
     if (info) {
       // Avoid duplicates just in case
       if (!allExports.some(e => e.name === info.name)) {
-        console.error(`  ✅ Adding export: ${name} (${info.kind})`);
+        // console.error(`  ✅ Adding export: ${name} (${info.kind})`);
         allExports.push(info);
       } else {
-        console.error(`  ⏭️ Skipping duplicate: ${name}`);
+        // console.error(`  ⏭️ Skipping duplicate: ${name}`);
       }
     } else {
-      console.error(`  ⏭️ Could not get export info for: ${name}`);
+      // console.error(`  ⏭️ Could not get export info for: ${name}`);
     }
   }
 
@@ -255,4 +321,71 @@ function getExportInfo(node: Node, name: string): ExportInfo | null {
     typeSignature,
     description,
   };
+}
+
+/**
+ * Tries to load exports from cache
+ */
+function tryLoadFromCache(packageName: string, cacheDir: string): ExportInfo[] | null {
+  const cacheFilePath = path.join(process.cwd(), cacheDir, `${packageName}.json`);
+  
+  if (!fs.existsSync(cacheFilePath)) {
+    return null;
+  }
+  
+  try {
+    const cacheContent = fs.readFileSync(cacheFilePath, 'utf8');
+    return JSON.parse(cacheContent);
+  } catch (error) {
+    console.error(`❌ Failed to load cache for ${packageName}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Saves exports to cache
+ */
+function saveToCache(packageName: string, exports: ExportInfo[], cacheDir: string): void {
+  const cacheDirPath = path.join(process.cwd(), cacheDir);
+  
+  // Create cache directory if it doesn't exist
+  if (!fs.existsSync(cacheDirPath)) {
+    fs.mkdirSync(cacheDirPath, { recursive: true });
+  }
+  
+  const cacheFilePath = path.join(cacheDirPath, `${packageName}.json`);
+  
+  try {
+    fs.writeFileSync(cacheFilePath, JSON.stringify(exports, null, 2));
+    console.error(`✅ Saved ${exports.length} exports to cache: ${cacheFilePath}`);
+  } catch (error) {
+    console.error(`❌ Failed to save cache for ${packageName}:`, error);
+  }
+}
+
+/**
+ * Filters exports based on search term and limit
+ */
+function filterExports(exports: ExportInfo[], searchTerm?: string, limit?: number): ExportInfo[] {
+  let result = exports;
+  
+  // Apply search term filter if provided
+  if (searchTerm) {
+    const regex = new RegExp(searchTerm, 'i');
+    result = exports.filter(exp => 
+      regex.test(exp.name) || 
+      regex.test(exp.typeSignature) || 
+      regex.test(exp.description)
+    );
+    
+    console.error(`🔍 Filtered to ${result.length} exports matching "${searchTerm}"`);
+  }
+  
+  // Apply limit if provided
+  if (limit !== undefined && limit > 0) {
+    result = result.slice(0, limit);
+    console.error(`📊 Limited to ${result.length} exports`);
+  }
+  
+  return result;
 }
