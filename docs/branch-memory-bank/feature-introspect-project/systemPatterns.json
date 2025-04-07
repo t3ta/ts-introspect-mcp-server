@@ -1,0 +1,61 @@
+{
+  "schema": "memory_document_v2",
+  "metadata": {
+    "id": "3251af3b-0eb2-45e2-8203-f66b9c56376b",
+    "title": "システムパターン",
+    "documentType": "system_patterns",
+    "path": "systemPatterns.json",
+    "tags": [
+      "system-patterns"
+    ],
+    "lastModified": "2025-04-07T03:31:31.309Z",
+    "createdAt": "2025-04-07T03:31:31.309Z",
+    "version": 1
+  },
+  "content": {
+    "technicalDecisions": [
+      {
+        "id": "a2256184-9ba8-4310-ab84-f19dc620a29c",
+        "title": "決定事項のタイトル",
+        "context": "決定の背景や理由",
+        "decision": "具体的な決定内容",
+        "consequences": {
+          "positive": [
+            "影響1",
+            "影響2",
+            "影響3"
+          ],
+          "negative": []
+        },
+        "status": "proposed",
+        "date": "2025-04-07T03:31:31.309Z",
+        "alternatives": []
+      },
+      {
+        "id": "introspect-project-design-v1",
+        "title": "MCP Tool: introspect-project",
+        "context": "既存のツールではnpmパッケージしか解析できないため、ローカルプロジェクト全体のTypeScriptコードを解析する機能が必要。",
+        "decision": "新しいMCPツール `introspect-project` を追加する。\n引数:\n- `projectPath` (任意): 解析対象プロジェクトのルートパス。指定がない場合は、親ディレクトリまたはCWDから `tsconfig.json` を探索して決定。\n- `tsConfigPath` (任意): `tsconfig.json` のパス。\n- `searchTerm` (任意): 結果フィルタ用キーワード。\n- `cache` (任意, デフォルト true): キャッシュ有効/無効。\n- `cacheDir` (任意): キャッシュディレクトリ。\n- `limit` (任意): 結果の最大数。\n処理フロー:\n1. プロジェクトパスとtsconfigパスを特定（引数 or 探索）。\n2. ts-morphでプロジェクト読み込み。\n3. 全ソースファイルからエクスポート情報を抽出。\n4. キャッシュ/フィルタ/制限を適用。\n5. 結果をJSONで返す。",
+        "consequences": {
+          "positive": [
+            "ローカルプロジェクト全体のコード解析が可能になる。",
+            "MCPクライアントからプロジェクト構造を把握しやすくなる。",
+            "既存の `ts-morph` 関連のコードを再利用できる可能性がある。"
+          ],
+          "negative": [
+            "大規模プロジェクトの場合、解析に時間がかかる可能性がある。",
+            "tsconfig.json の探索ロジックが複雑になる可能性がある。",
+            "キャッシュ戦略を適切に設計する必要がある。"
+          ]
+        },
+        "status": "accepted",
+        "date": "2025-04-07",
+        "alternatives": [
+          "既存の `introspect-package` を拡張する（引数が複雑になりすぎる可能性）。",
+          "ファイルシステム探索と個別ファイル解析を組み合わせる（ts-morphのプロジェクト解析機能を使わない）。"
+        ]
+      }
+    ],
+    "implementationPatterns": []
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "schema": "memory_document_v2",
+  "metadata": {
+    "id": "05663462-b915-4c24-ab2a-1564a99e4bfd",
+    "title": "ブランチコンテキスト",
+    "documentType": "branch_context",
+    "path": "branchContext.json",
+    "tags": [
+      "branch-context"
+    ],
+    "lastModified": "2025-04-07T03:31:31.308Z",
+    "createdAt": "2025-04-07T03:31:31.308Z",
+    "version": 1
+  },
+  "content": {
+    "branchName": "feature/introspect-project",
+    "purpose": "このブランチの目的を記述してください",
+    "createdAt": "2025-04-07T03:31:31.308Z",
+    "userStories": [
+      {
+        "id": "b66d6a04-4124-4f2a-b291-cb74dd954794",
+        "description": "解決する課題1",
+        "completed": false,
+        "priority": 1
+      },
+      {
+        "id": "472c6630-e12f-412d-9e88-4c9bfad19d95",
+        "description": "解決する課題2",
+        "completed": false,
+        "priority": 2
+      },
+      {
+        "id": "12b0d496-abbb-4424-8c47-a5f5a620bd3b",
+        "description": "解決する課題3",
+        "completed": false,
+        "priority": 3
+      }
+    ],
+    "additionalNotes": ""
+  }
+}
