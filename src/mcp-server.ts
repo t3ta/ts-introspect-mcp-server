@@ -5,6 +5,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { introspectFromPackage } from "./introspect/fromPackage.js";
 import { introspectFromSource } from "./introspect/fromSource.js";
+import { introspectFromProject } from "./introspect/fromProject.js";
 import { IntrospectOptions, type ExportInfo } from "./introspect/types.js";
 import * as fs from "fs";
 import * as path from "path";
@@ -58,7 +59,40 @@ async function main() {
       name: "TypeScript Package Introspector",
       version: "0.1.0",
       capabilities: {
-        tools: {}
+        tools: {
+          "introspect-project": {
+            description: "Analyze TypeScript exports from a local project",
+            inputSchema: {
+              type: "object",
+              properties: {
+                projectPath: {
+                  type: "string",
+                  description: "Optional: Path to the project root. If not provided, will try to detect from CWD or parent directory."
+                },
+                tsConfigPath: {
+                  type: "string",
+                  description: "Optional: Path to tsconfig.json. If not provided, will try to detect from projectPath."
+                },
+                searchTerm: {
+                  type: "string",
+                  description: "Optional: Filter exports by search term (supports regex)"
+                },
+                cache: {
+                  type: "boolean",
+                  description: "Optional: Enable/disable caching for faster repeat lookups (default: true)"
+                },
+                cacheDir: {
+                  type: "string",
+                  description: "Optional: Directory to store cache files (default: .ts-morph-cache)"
+                },
+                limit: {
+                  type: "number",
+                  description: "Optional: Limit the number of exports returned"
+                }
+              }
+            }
+          }
+        }
       }
     });
 
@@ -194,6 +228,59 @@ async function main() {
               {
                 type: "text",
                 text: `Error introspecting source code:\n\n${errorMessage}`
+              }
+            ],
+            isError: true
+          };
+        }
+      }
+    );
+
+    // Add introspect-project tool
+    server.tool(
+      "introspect-project",
+      {
+        projectPath: z.string().optional().describe("Path to the project root. If not provided, will try to detect from CWD or parent directory."),
+        tsConfigPath: z.string().optional().describe("Path to tsconfig.json. If not provided, will try to detect from projectPath."),
+        searchTerm: z.string().optional().describe("Filter exports by search term (supports regex)"),
+        cache: z.boolean().optional().describe("Enable/disable caching for faster repeat lookups"),
+        cacheDir: z.string().optional().describe("Directory to store cache files (default: .ts-morph-cache)"),
+        limit: z.number().optional().describe("Limit the number of exports returned")
+      },
+      async ({ projectPath, tsConfigPath, searchTerm, cache = true, cacheDir, limit }) => {
+        console.error(`📋 Running introspect-project${projectPath ? ` for: ${projectPath}` : ' (auto-detect)'}`);
+        try {
+          const exports = await introspectFromProject({
+            projectPath,
+            tsConfigPath,
+            searchTerm,
+            cache,
+            cacheDir,
+            limit
+          });
+
+          console.error(`✅ Successfully analyzed project, found ${exports.length} exports`);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(exports, null, 2)
+              }
+            ]
+          };
+        } catch (error) {
+          const errorMessage = error instanceof Error
+            ? `${error.message}\n\n${error.stack}`
+            : String(error);
+
+          console.error(`💥 Error in introspect-project:`, errorMessage);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error analyzing project:\n\n${errorMessage}`
               }
             ],
             isError: true

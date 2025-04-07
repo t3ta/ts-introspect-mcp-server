@@ -47,6 +47,7 @@ web_modules/
 
 # TypeScript cache
 *.tsbuildinfo
+.ts-morph-cache
 
 # Optional npm cache directory
 .npm

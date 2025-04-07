@@ -1,0 +1,89 @@
+{
+  "schema": "memory_document_v2",
+  "metadata": {
+    "id": "1550563a-e73c-4ce5-abd9-483f13aa6605",
+    "title": "アクティブコンテキスト",
+    "documentType": "active_context",
+    "path": "activeContext.json",
+    "tags": [
+      "active-context"
+    ],
+    "lastModified": "2025-04-07T03:31:31.308Z",
+    "createdAt": "2025-04-07T03:31:31.308Z",
+    "version": 1
+  },
+  "content": {
+    "currentWork": "現在取り組んでいる作業の説明",
+    "recentChanges": [
+      {
+        "date": "2025-04-07T03:31:31.308Z",
+        "description": "変更点1"
+      },
+      {
+        "date": "2025-04-07T03:31:31.308Z",
+        "description": "変更点2"
+      },
+      {
+        "date": "2025-04-07T03:31:31.308Z",
+        "description": "変更点3"
+      }
+    ],
+    "activeDecisions": [
+      {
+        "id": "84768865-c636-439c-aab4-d739ce116a9c",
+        "description": "決定事項1"
+      },
+      {
+        "id": "8c587ea0-20f5-42ea-88b6-b5fff0c669dd",
+        "description": "決定事項2"
+      },
+      {
+        "id": "bbfa6e87-a001-47e8-a0eb-d0c4a22bab65",
+        "description": "決定事項3"
+      },
+      {
+        "id": "introspect-project-design-decision-v1",
+        "description": "新しいMCPツール `introspect-project` の設計を決定。projectPathがなくても親/CWDのtsconfig.jsonを探索するロジックを含む。"
+      }
+    ],
+    "considerations": [
+      {
+        "id": "e98ac375-c64b-4938-acfc-d6762b41e0c3",
+        "description": "検討事項1",
+        "status": "open"
+      },
+      {
+        "id": "f3897a2a-1f1e-4ba1-bec8-d849711fb8d8",
+        "description": "検討事項2",
+        "status": "open"
+      },
+      {
+        "id": "58abae02-87d2-4e49-8219-d19e4574d061",
+        "description": "検討事項3",
+        "status": "open"
+      }
+    ],
+    "nextSteps": [
+      {
+        "id": "50c05fae-81d4-4f40-ad8f-f3b50603f515",
+        "description": "次のステップ1",
+        "priority": "high"
+      },
+      {
+        "id": "64011268-1cdb-442a-b5ec-03d98a5f19b4",
+        "description": "次のステップ2",
+        "priority": "medium"
+      },
+      {
+        "id": "2bc7ae76-82a5-466b-b1b6-5b836296bb7e",
+        "description": "次のステップ3",
+        "priority": "low"
+      },
+      {
+        "id": "implement-introspect-project-v1",
+        "description": "設計に基づき `introspect-project` ツールを実装する",
+        "priority": "high"
+      }
+    ]
+  }
+}
