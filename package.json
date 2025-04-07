@@ -1,6 +1,6 @@
 {
   "name": "@t3ta/ts-introspect-mcp-server",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "A tool to introspect exported symbols from a TypeScript package using ts-morph and output a MCP-like schema.",
   "type": "module",
   "main": "dist/mcp-server.js",
