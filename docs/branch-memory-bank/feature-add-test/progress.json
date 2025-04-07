@@ -1,0 +1,51 @@
+{
+  "schema": "memory_document_v2",
+  "metadata": {
+    "title": "進捗状況 (feature/add-test)",
+    "documentType": "progress",
+    "path": "progress.json",
+    "tags": [
+      "progress",
+      "feature/add-test"
+    ]
+  },
+  "content": {
+    "workingFeatures": [],
+    "pendingImplementation": [
+      {
+        "id": "test-sdk-load",
+        "description": "tests/fromPackage.spec.ts に @modelcontextprotocol/sdk のロードテストを追加する計画",
+        "priority": "medium",
+        "details": {
+          "file": "tests/fromPackage.spec.ts",
+          "proposed_code": "test(\"introspects '@modelcontextprotocol/sdk'\", async () => {\n  const result = await introspectFromPackage(\"@modelcontextprotocol/sdk\");\n  expect(result.length).toBeGreaterThan(0);\n  // TEMP: @modelcontextprotocol/sdk の具体的なエクスポートを確認するアサーションを追加する\n});"
+        }
+      },
+      {
+        "id": "refactor-fromPackage",
+        "description": "src/introspect/fromPackage.ts を複数のファイルに分割するリファクタリング計画",
+        "priority": "high",
+        "details": {
+          "files_to_create": [
+            "src/introspect/packageResolver.ts",
+            "src/introspect/cacheUtils.ts",
+            "src/introspect/exportExtractor.ts",
+            "src/introspect/filterUtils.ts"
+          ],
+          "file_to_modify": "src/introspect/fromPackage.ts",
+          "plan": [
+            "findPackageJsonAndDir 関数を packageResolver.ts に移動",
+            "findDeclarationFiles 関数を packageResolver.ts に移動",
+            "tryLoadFromCache, saveToCache 関数を cacheUtils.ts に移動",
+            "extractExports, getExportInfo 関数を exportExtractor.ts に移動",
+            "filterExports 関数を filterUtils.ts に移動",
+            "fromPackage.ts をヘルパー関数呼び出しに書き換え"
+          ]
+        }
+      }
+    ],
+    "status": "ファイル分割計画を記録",
+    "completionPercentage": 0,
+    "knownIssues": []
+  }
+}
