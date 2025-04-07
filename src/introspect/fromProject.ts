@@ -78,8 +78,8 @@ export async function introspectFromProject(
     );
   }
 
-  console.error(`📂 Project path: ${resolvedProjectPath}`);
-  console.error(`📄 tsconfig.json: ${resolvedTsConfigPath}`);
+  if (process.env.DEBUG === 'true') console.error(`📂 Project path: ${resolvedProjectPath}`);
+  if (process.env.DEBUG === 'true') console.error(`📄 tsconfig.json: ${resolvedTsConfigPath}`);
 
   // キャッシュキーはプロジェクトパスとtsconfig.jsonのハッシュから生成
   const cacheKey = `project-${Buffer.from(resolvedProjectPath + resolvedTsConfigPath).toString('base64')}`;
@@ -88,7 +88,7 @@ export async function introspectFromProject(
   if (cache) {
     const cachedExports = tryLoadFromCache(cacheKey, cacheDir);
     if (cachedExports) {
-      console.error(`✨ Using cached exports for project: ${resolvedProjectPath}`);
+      if (process.env.DEBUG === 'true') console.error(`✨ Using cached exports for project: ${resolvedProjectPath}`);
       return filterExports(cachedExports, searchTerm, limit);
     }
   }
@@ -101,7 +101,7 @@ export async function introspectFromProject(
 
   // プロジェクト内の全ソースファイルを取得
   const sourceFiles = project.getSourceFiles();
-  console.error(`📊 Found ${sourceFiles.length} source files`);
+  if (process.env.DEBUG === 'true') console.error(`📊 Found ${sourceFiles.length} source files`);
 
   // 各ファイルからエクスポートを抽出
   const allExports: ExportInfo[] = [];
@@ -110,7 +110,7 @@ export async function introspectFromProject(
       const fileExports = extractExports(sourceFile);
       allExports.push(...fileExports);
     } catch (error) {
-      console.error(`❌ Error extracting exports from ${sourceFile.getFilePath()}:`, error);
+      if (process.env.DEBUG === 'true') console.error(`❌ Error extracting exports from ${sourceFile.getFilePath()}:`, error);
     }
   }
 

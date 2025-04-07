@@ -6,10 +6,10 @@ import { ExportInfo } from "./types.js"; // Assuming types.ts is in the same dir
  * Extract exports from a source file
  */
 export function extractExports(sourceFile: SourceFile): ExportInfo[] {
-  console.error(`🔍 Extracting exports from source file...`);
+  if (process.env.DEBUG === 'true') console.error(`🔍 Extracting exports from source file...`);
   const allExports: ExportInfo[] = [];
   const exportSymbols = sourceFile.getExportSymbols();
-  console.error(`🔢 Found ${exportSymbols.length} export symbols`);
+  if (process.env.DEBUG === 'true') console.error(`🔢 Found ${exportSymbols.length} export symbols`);
 
   for (const symbol of exportSymbols) {
     const name = symbol.getName();
@@ -44,7 +44,7 @@ export function extractExports(sourceFile: SourceFile): ExportInfo[] {
     }
   }
 
-  console.error(`✅ Extracted ${allExports.length} exports`);
+  if (process.env.DEBUG === 'true') console.error(`✅ Extracted ${allExports.length} exports`);
   return allExports;
 }
 

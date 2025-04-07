@@ -1,6 +1,6 @@
 # TypeScript Package Introspector (MCP Server)
 
-This tool introspects TypeScript packages and source code to extract exported symbols (functions, classes, types, constants) and their type information. It can be used both as a library/CLI tool and as a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server.
+This tool introspects TypeScript packages and source code to extract exported symbols (functions, classes, types, constants) and their type information. It runs as a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server.
 
 ## Features
 
@@ -8,63 +8,27 @@ This tool introspects TypeScript packages and source code to extract exported sy
 - Analyze TypeScript source code directly
 - Get detailed type signatures for all exported symbols
 - Extract JSDoc comments as descriptions
-- Run as an MCP server to provide context to LLMs
+- Provide type information to LLMs through MCP
 
-## Installation
+## Usage
 
-```bash
-# Clone the repository
-git clone https://github.com/t3ta/ts-introspect-mcp-server.git
-cd ts-introspect-mcp-server
-
-# Install dependencies
-npm install
-# or with pnpm
-pnpm install
-```
-
-## Usage as CLI
+This tool can be run as an MCP server to provide TypeScript package introspection capabilities to LLM applications like Claude for Desktop. You can start it using npx:
 
 ```bash
-# Build the project
-npm run build
-
-# Introspect a package
-node dist/index.js zod
+npx ts-introspect-mcp-server
 ```
 
-## Usage as Library
+To integrate it with your project, create a `.roo/mcp.json` configuration file:
 
-```typescript
-import {
-  introspectFromPackage,
-  introspectFromSource,
-} from "ts-introspect-mcp-server";
-
-// Introspect a package
-const exports = await introspectFromPackage("zod");
-console.log(exports);
-
-// Introspect source code
-const source = `
-export function add(a: number, b: number): number {
-  return a + b;
+```json
+{
+  "mcpServers": {
+    "ts-introspect": {
+      "command": "npx",
+      "args": ["-y", "ts-introspect-mcp-server"]
+    }
+  }
 }
-`;
-const sourceExports = introspectFromSource(source);
-console.log(sourceExports);
-```
-
-## Usage as MCP Server
-
-This tool can be run as an MCP server to provide TypeScript package introspection capabilities to LLM applications like Claude for Desktop.
-
-```bash
-# Build the project
-npm run build
-
-# Start the MCP server
-npm start
 ```
 
 ### MCP Tools
@@ -92,9 +56,6 @@ Parameters:
 ```bash
 # Run tests
 npm test
-
-# Start the development server
-npm run dev
 
 # Start the MCP server in development mode
 npm run start:mcp
