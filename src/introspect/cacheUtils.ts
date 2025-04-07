@@ -22,7 +22,7 @@ export function tryLoadFromCache(packageName: string, cacheDir: string = DEFAULT
     const cacheContent = fs.readFileSync(cacheFilePath, 'utf8');
     return JSON.parse(cacheContent);
   } catch (error) {
-    console.error(`❌ Failed to load cache for ${packageName}:`, error);
+    if (process.env.DEBUG === 'true') console.error(`❌ Failed to load cache for ${packageName}:`, error);
     return null;
   }
 }
@@ -42,8 +42,8 @@ export function saveToCache(packageName: string, exports: ExportInfo[], cacheDir
 
   try {
     fs.writeFileSync(cacheFilePath, JSON.stringify(exports, null, 2));
-    console.error(`✅ Saved ${exports.length} exports to cache: ${cacheFilePath}`);
+    if (process.env.DEBUG === 'true') console.error(`✅ Saved ${exports.length} exports to cache: ${cacheFilePath}`);
   } catch (error) {
-    console.error(`❌ Failed to save cache for ${packageName}:`, error);
+    if (process.env.DEBUG === 'true') console.error(`❌ Failed to save cache for ${packageName}:`, error);
   }
 }

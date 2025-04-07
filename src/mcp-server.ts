@@ -16,12 +16,12 @@ const require = createRequire(import.meta.url);
 
 // Enable unhandled exception logging
 process.on("uncaughtException", (error) => {
-  console.error("💥💥💥 UNCAUGHT EXCEPTION:", error);
+  if (process.env.DEBUG === 'true') console.error("💥💥💥 UNCAUGHT EXCEPTION:", error);
   // Don't exit the process here - just log
 });
 
 process.on("unhandledRejection", (reason) => {
-  console.error("💥💥💥 UNHANDLED REJECTION:", reason instanceof Error ? reason.stack : reason);
+  if (process.env.DEBUG === 'true') console.error("💥💥💥 UNHANDLED REJECTION:", reason instanceof Error ? reason.stack : reason);
   // Don't exit the process here - just log
 });
 
@@ -33,14 +33,14 @@ const PARENT_DIR = path.dirname(SERVER_DIR);
 const DEFAULT_SEARCH_PATHS = [SERVER_DIR, PARENT_DIR];
 
 // Diagnostic info
-console.error("📂 Current directory:", process.cwd());
-console.error("🔍 Server Directory:", SERVER_DIR);
-console.error("🔍 Parent Directory:", PARENT_DIR);
-console.error("🔍 NODE_PATH:", process.env.NODE_PATH);
-console.error("📋 node_modules exists:", fs.existsSync(path.join(process.cwd(), "node_modules")));
+if (process.env.DEBUG === 'true') console.error("📂 Current directory:", process.cwd());
+if (process.env.DEBUG === 'true') console.error("🔍 Server Directory:", SERVER_DIR);
+if (process.env.DEBUG === 'true') console.error("🔍 Parent Directory:", PARENT_DIR);
+if (process.env.DEBUG === 'true') console.error("🔍 NODE_PATH:", process.env.NODE_PATH);
+if (process.env.DEBUG === 'true') console.error("📋 node_modules exists:", fs.existsSync(path.join(process.cwd(), "node_modules")));
 
 async function main() {
-  console.error("🚀🚀🚀 Starting TypeScript Package Introspector MCP server...");
+  if (process.env.DEBUG === 'true') console.error("🚀🚀🚀 Starting TypeScript Package Introspector MCP server...");
 
   // Skipping direct tests to reduce startup time & timeouts
   // try {
@@ -58,45 +58,10 @@ async function main() {
     const server = new McpServer({
       name: "TypeScript Package Introspector",
       version: "0.1.0",
-      capabilities: {
-        tools: {
-          "introspect-project": {
-            description: "Analyze TypeScript exports from a local project",
-            inputSchema: {
-              type: "object",
-              properties: {
-                projectPath: {
-                  type: "string",
-                  description: "Optional: Path to the project root. If not provided, will try to detect from CWD or parent directory."
-                },
-                tsConfigPath: {
-                  type: "string",
-                  description: "Optional: Path to tsconfig.json. If not provided, will try to detect from projectPath."
-                },
-                searchTerm: {
-                  type: "string",
-                  description: "Optional: Filter exports by search term (supports regex)"
-                },
-                cache: {
-                  type: "boolean",
-                  description: "Optional: Enable/disable caching for faster repeat lookups (default: true)"
-                },
-                cacheDir: {
-                  type: "string",
-                  description: "Optional: Directory to store cache files (default: .ts-morph-cache)"
-                },
-                limit: {
-                  type: "number",
-                  description: "Optional: Limit the number of exports returned"
-                }
-              }
-            }
-          }
-        }
-      }
+      capabilities: {} // Tools are registered below using server.tool()
     });
 
-    console.error("📦 Registering tools...");
+    if (process.env.DEBUG === 'true') console.error("📦 Registering tools...");
 
     // Add a tool to introspect from a package with MEGA DEBUG
     server.tool(
@@ -110,8 +75,8 @@ async function main() {
         limit: z.number().describe("Limit the number of exports returned").optional()
       },
       async ({ packageName, searchPaths = [], searchTerm, cache = true, cacheDir, limit }) => {
-        console.error(`📋 Running introspect-package for: ${packageName}`);
-        console.error(`🔍 User-provided search paths: ${searchPaths.length ? searchPaths.join(', ') : 'none'}`);
+        if (process.env.DEBUG === 'true') console.error(`📋 Running introspect-package for: ${packageName}`);
+        if (process.env.DEBUG === 'true') console.error(`🔍 User-provided search paths: ${searchPaths.length ? searchPaths.join(', ') : 'none'}`);
 
         // Combine default search paths with user-provided paths
         const allSearchPaths = [...DEFAULT_SEARCH_PATHS, ...searchPaths];
@@ -128,7 +93,7 @@ async function main() {
         // Extra safeguard to catch every possible error
         try {
           // Normal flow continues
-          console.error(`⏳ Starting introspection of ${packageName}...`);
+          if (process.env.DEBUG === 'true') console.error(`⏳ Starting introspection of ${packageName}...`);
 
           // Add a timeout to prevent hanging
           const timeoutMs = 60000; // 1 minute
@@ -148,7 +113,7 @@ async function main() {
 
           // Handle the annoying empty arrays case
           if (exports.length === 0) {
-            console.error(`⚠️ Warning: No exports found in ${packageName}.`);
+            if (process.env.DEBUG === 'true') console.error(`⚠️ Warning: No exports found in ${packageName}.`);
             return {
               content: [
                 {
@@ -159,7 +124,7 @@ async function main() {
             };
           }
 
-          console.error(`✅ Successfully introspected package: ${packageName}, found ${exports.length} exports`);
+          if (process.env.DEBUG === 'true') console.error(`✅ Successfully introspected package: ${packageName}, found ${exports.length} exports`);
 
           // Skip debug file writing to improve performance
           // try {
@@ -182,7 +147,7 @@ async function main() {
             ? `${error.message}\n\n${error.stack}`
             : String(error);
 
-          console.error(`💥 Error in introspect-package "${packageName}":`, errorMessage);
+          if (process.env.DEBUG === 'true') console.error(`💥 Error in introspect-package "${packageName}":`, errorMessage);
 
           return {
             content: [
@@ -204,10 +169,10 @@ async function main() {
         source: z.string().describe("TypeScript source code to analyze")
       },
       async ({ source }) => {
-        console.error(`📋 Running introspect-source with ${source.length} characters of code`);
+        if (process.env.DEBUG === 'true') console.error(`📋 Running introspect-source with ${source.length} characters of code`);
         try {
           const exports = introspectFromSource(source);
-          console.error(`✅ Successfully introspected source code, found ${exports.length} exports`);
+          if (process.env.DEBUG === 'true') console.error(`✅ Successfully introspected source code, found ${exports.length} exports`);
           return {
             content: [
               {
@@ -221,7 +186,7 @@ async function main() {
             ? `${error.message}\n\n${error.stack}`
             : String(error);
 
-          console.error(`💥 Error introspecting source code:`, errorMessage);
+          if (process.env.DEBUG === 'true') console.error(`💥 Error introspecting source code:`, errorMessage);
 
           return {
             content: [
@@ -248,7 +213,7 @@ async function main() {
         limit: z.number().optional().describe("Limit the number of exports returned")
       },
       async ({ projectPath, tsConfigPath, searchTerm, cache = true, cacheDir, limit }) => {
-        console.error(`📋 Running introspect-project${projectPath ? ` for: ${projectPath}` : ' (auto-detect)'}`);
+        if (process.env.DEBUG === 'true') console.error(`📋 Running introspect-project${projectPath ? ` for: ${projectPath}` : ' (auto-detect)'}`);
         try {
           const exports = await introspectFromProject({
             projectPath,
@@ -259,7 +224,7 @@ async function main() {
             limit
           });
 
-          console.error(`✅ Successfully analyzed project, found ${exports.length} exports`);
+          if (process.env.DEBUG === 'true') console.error(`✅ Successfully analyzed project, found ${exports.length} exports`);
 
           return {
             content: [
@@ -274,7 +239,7 @@ async function main() {
             ? `${error.message}\n\n${error.stack}`
             : String(error);
 
-          console.error(`💥 Error in introspect-project:`, errorMessage);
+          if (process.env.DEBUG === 'true') console.error(`💥 Error in introspect-project:`, errorMessage);
 
           return {
             content: [
@@ -289,15 +254,15 @@ async function main() {
       }
     );
 
-    console.error("🔌 Creating transport and connecting...");
+    if (process.env.DEBUG === 'true') console.error("🔌 Creating transport and connecting...");
 
     // Start receiving messages on stdin and sending messages on stdout
     const transport = new StdioServerTransport();
 
     // Connect to transport
-    console.error("⏳ Awaiting connection...");
+    if (process.env.DEBUG === 'true') console.error("⏳ Awaiting connection...");
     await server.connect(transport);
-    console.error("✅ Server connected successfully!");
+    if (process.env.DEBUG === 'true') console.error("✅ Server connected successfully!");
 
     // Keep process alive (some implementations need this)
     process.stdin.resume();
@@ -313,14 +278,14 @@ async function main() {
     //   clearInterval(heartbeat);
     // });
 
-    console.error("🟢 MCP server ready to accept requests");
+    if (process.env.DEBUG === 'true') console.error("🟢 MCP server ready to accept requests");
   } catch (error) {
-    console.error("💥 Server initialization error:", error);
+    if (process.env.DEBUG === 'true') console.error("💥 Server initialization error:", error);
     process.exit(1);
   }
 }
 
 main().catch((error) => {
-  console.error("💥 Fatal error in main():", error);
+  if (process.env.DEBUG === 'true') console.error("💥 Fatal error in main():", error);
   process.exit(1);
 });

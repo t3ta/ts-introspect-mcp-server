@@ -16,13 +16,13 @@ export function filterExports(exports: ExportInfo[], searchTerm?: string, limit?
       regex.test(exp.description)
     );
 
-    console.error(`🔍 Filtered to ${result.length} exports matching "${searchTerm}"`);
+    if (process.env.DEBUG === 'true') console.error(`🔍 Filtered to ${result.length} exports matching "${searchTerm}"`);
   }
 
   // Apply limit if provided
   if (limit !== undefined && limit > 0) {
     result = result.slice(0, limit);
-    console.error(`📊 Limited to ${result.length} exports`);
+    if (process.env.DEBUG === 'true') console.error(`📊 Limited to ${result.length} exports`);
   }
 
   return result;

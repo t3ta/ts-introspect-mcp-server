@@ -26,18 +26,18 @@ export async function introspectFromPackage(
     limit
   } = options;
 
-  console.error(`🔎 Introspecting package: ${packageName}...`);
+  if (process.env.DEBUG === 'true') console.error(`🔎 Introspecting package: ${packageName}...`);
 
   // Try to load from cache first if enabled
   if (cache) {
     const cachedExports = tryLoadFromCache(packageName, cacheDir);
     if (cachedExports) {
-      console.error(`✅ Loaded exports from cache for ${packageName}`);
+      if (process.env.DEBUG === 'true') console.error(`✅ Loaded exports from cache for ${packageName}`);
       return filterExports(cachedExports, searchTerm, limit);
     }
   }
 
-  console.error(`🔍 Search paths: ${[process.cwd(), ...searchPaths].join(', ')}`);
+  if (process.env.DEBUG === 'true') console.error(`🔍 Search paths: ${[process.cwd(), ...searchPaths].join(', ')}`);
 
   const project = new Project({
     compilerOptions: {
@@ -76,25 +76,25 @@ export async function introspectFromPackage(
     // 3. Add declaration files to the ts-morph project and extract exports
     let allExports: ExportInfo[] = [];
     for (const filePath of declarationFiles) {
-       console.error(`📄 Attempting to load and extract from: ${filePath}`);
+       if (process.env.DEBUG === 'true') console.error(`📄 Attempting to load and extract from: ${filePath}`);
        if (!fs.existsSync(filePath)) { // Double check existence before adding
-           console.error(`  ❌ File does not exist (skipped): ${filePath}`);
+           if (process.env.DEBUG === 'true') console.error(`  ❌ File does not exist (skipped): ${filePath}`);
            continue;
        }
        try {
            const sourceFile = project.addSourceFileAtPath(filePath);
-           console.error(`  ✅ Source file added to project: ${filePath}`);
+           if (process.env.DEBUG === 'true') console.error(`  ✅ Source file added to project: ${filePath}`);
            const fileExports = extractExports(sourceFile);
            allExports = allExports.concat(fileExports); // Combine exports
-           console.error(`  📊 Found ${fileExports.length} exports in this file. Total exports now: ${allExports.length}`);
+           if (process.env.DEBUG === 'true') console.error(`  📊 Found ${fileExports.length} exports in this file. Total exports now: ${allExports.length}`);
        } catch (fileError) {
-           console.error(`  ❌ Failed to load or extract exports from ${filePath}:`, fileError);
+           if (process.env.DEBUG === 'true') console.error(`  ❌ Failed to load or extract exports from ${filePath}:`, fileError);
            // Optionally decide whether to continue or re-throw
        }
     }
 
     if (allExports.length === 0) {
-        console.error(`⚠️ No exports could be extracted from any found .d.ts files for package ${packageName}`);
+        if (process.env.DEBUG === 'true') console.error(`⚠️ No exports could be extracted from any found .d.ts files for package ${packageName}`);
     }
 
     // Save to cache if enabled
@@ -105,7 +105,7 @@ export async function introspectFromPackage(
     // Apply filtering
     return filterExports(allExports, searchTerm, limit);
   } catch (error) {
-    console.error(`❌ Failed to load declaration file for package ${packageName}:`, error);
+    if (process.env.DEBUG === 'true') console.error(`❌ Failed to load declaration file for package ${packageName}:`, error);
     return [];
   }
 }

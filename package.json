@@ -15,7 +15,6 @@
   },
   "scripts": {
     "build": "tsc && chmod +x dist/mcp-server.js",
-    "dev": "ts-node src/index.ts",
     "test": "vitest",
     "start:mcp": "ts-node --esm src/mcp-server.ts",
     "build:mcp": "tsc",
