@@ -8,3 +8,11 @@ describe("introspectFromPackage", () => {
     expect(result.some(e => e.name === "z")).toBe(true);
   });
 });
+
+  test("introspects '@modelcontextprotocol/sdk'", async () => {
+    const result = await introspectFromPackage("@modelcontextprotocol/sdk");
+    // Check if any exports were found (actual check)
+    expect(result.length).toBeGreaterThan(0);
+    // Optionally, add a more specific check if you know an expected export
+    // expect(result.some(e => e.name === "InitializeRequestSchema")).toBe(true);
+  });

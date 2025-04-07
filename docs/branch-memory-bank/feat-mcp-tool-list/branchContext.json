@@ -1,0 +1,41 @@
+{
+  "schema": "memory_document_v2",
+  "metadata": {
+    "id": "b06fd798-a565-4736-8773-26fc971f2e21",
+    "title": "ブランチコンテキスト",
+    "documentType": "branch_context",
+    "path": "branchContext.json",
+    "tags": [
+      "branch-context"
+    ],
+    "lastModified": "2025-04-07T01:42:48.593Z",
+    "createdAt": "2025-04-07T01:42:48.593Z",
+    "version": 1
+  },
+  "content": {
+    "branchName": "feat/mcp-tool-list",
+    "purpose": "このブランチの目的を記述してください",
+    "createdAt": "2025-04-07T01:42:48.593Z",
+    "userStories": [
+      {
+        "id": "56c52c46-bb3c-491a-9cf4-78eb74a08574",
+        "description": "解決する課題1",
+        "completed": false,
+        "priority": 1
+      },
+      {
+        "id": "1866d1bf-3a5a-43fa-bf26-bc3d8c77dec0",
+        "description": "解決する課題2",
+        "completed": false,
+        "priority": 2
+      },
+      {
+        "id": "f94e0f65-b6d5-468d-a668-0d0231a63471",
+        "description": "解決する課題3",
+        "completed": false,
+        "priority": 3
+      }
+    ],
+    "additionalNotes": ""
+  }
+}

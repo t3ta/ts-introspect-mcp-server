@@ -14,8 +14,8 @@ This tool introspects TypeScript packages and source code to extract exported sy
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/ts-morph-mcp-server.git
-cd ts-morph-mcp-server
+git clone https://github.com/t3ta/ts-introspect-mcp-server.git
+cd ts-introspect-mcp-server
 
 # Install dependencies
 npm install
@@ -36,10 +36,13 @@ node dist/index.js zod
 ## Usage as Library
 
 ```typescript
-import { introspectFromPackage, introspectFromSource } from 'ts-morph-mcp-server';
+import {
+  introspectFromPackage,
+  introspectFromSource,
+} from "ts-introspect-mcp-server";
 
 // Introspect a package
-const exports = await introspectFromPackage('zod');
+const exports = await introspectFromPackage("zod");
 console.log(exports);
 
 // Introspect source code
@@ -73,6 +76,7 @@ The MCP server provides the following tools:
 Introspects an npm package and returns its exported symbols.
 
 Parameters:
+
 - `packageName`: Name of the npm package to introspect (e.g., 'zod')
 
 #### introspect-source
@@ -80,6 +84,7 @@ Parameters:
 Introspects TypeScript source code and returns the exported symbols.
 
 Parameters:
+
 - `source`: TypeScript source code to analyze
 
 ## Development
