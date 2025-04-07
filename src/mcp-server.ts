@@ -215,16 +215,16 @@ async function main() {
     // Keep process alive (some implementations need this)
     process.stdin.resume();
 
-    // Set up a heartbeat to prevent timeouts
-    const heartbeat = setInterval(() => {
-      // Write a small message to stderr to keep the process alive
-      process.stderr.write("❤️");
-    }, 5000); // Every 5 seconds
+    // // Set up a heartbeat to prevent timeouts
+    // const heartbeat = setInterval(() => {
+    //   // Write a small message to stderr to keep the process alive
+    //   process.stderr.write("❤️");
+    // }, 5000); // Every 5 seconds
 
-    // Cleanup on exit
-    process.on("exit", () => {
-      clearInterval(heartbeat);
-    });
+    // // Cleanup on exit
+    // process.on("exit", () => {
+    //   clearInterval(heartbeat);
+    // });
 
     console.error("🟢 MCP server ready to accept requests");
   } catch (error) {
